@@ -1,0 +1,12 @@
+about-time==3.1.1
+alive-progress==2.4.1
+click==8.1.2
+grapheme==0.6.0
+Pillow==9.1.0
+pip==22.0.4
+prompt-toolkit==3.0.29
+questionary==1.10.0
+setuptools==62.1.0
+waifu2x_ncnn_vulkan_python==1.0.1
+wcwidth==0.2.5
+wheel==0.37.1
