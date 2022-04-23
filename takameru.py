@@ -35,9 +35,20 @@ def extract(file: str) -> list[Image]:
     return res
 
 
-def upscale(images: list[tuple[str, Image]], waifu2x: Waifu2x) -> list[Image]:
+def waifu_2x(scale: int, noise: int) -> Waifu2x:
+    """
+    Creates the waifu2x upscaler
+    :return: the upscaler
+    """
+    # Creates the waifu2x upscaler
+    print('Starting waifu2x...')
+    return Waifu2x(gpuid=0, scale=scale, noise=noise, num_threads=4)
+
+
+def upscale(images: list[tuple[str, Image]], waifu2x: Waifu2x, write=False) -> list[Image]:
     """
     Upscales all PIL images inputted
+    :param write: whether to overwrite the input images
     :param waifu2x: the waifu2x upscaler
     :param images: the images to upscale
     :return: a list of upscaled images
@@ -47,7 +58,10 @@ def upscale(images: list[tuple[str, Image]], waifu2x: Waifu2x) -> list[Image]:
     bar = alive_it(images, length=20)
     for f, im in bar:
         bar.text(f'Upscaling {f}')
-        res.append(waifu2x.process(im))
+        if write:
+            waifu2x.process(im).save(f)
+        else:
+            res.append(waifu2x.process(im))
 
     return res
 
@@ -65,13 +79,13 @@ def save_to_pdf(images: list[Image], output: str):
 @click.command()
 @click.option('-n', '--noise-level',    'noise', default=2,     help='denoise level (-1/0/1/2/3, default=0)')
 @click.option('-s', '--scale',          'scale', default=2,     help='upscale ratio (1/2/4/8/16/32, default=2)')
-@click.option('-f', '--force',          'force', is_flag=True,  help='force overwrite')
+@click.option('-f', '--force',          'force', is_flag=True,  help='force write')
 @click.argument('fp')
 @click.argument('output')
 def takameru(fp: str, output: str, noise: int, scale: int, force: bool):
     """
-    Upscales a CBZ file or all CBZ files in a folder
-    :param force: whether to force overwrite
+    Upscale a CBZ file or all CBZ files in a folder
+    :param force: whether to force write
     :param fp: the file or directory to upscale
     :param output: the file or directory to save the output
     :param noise: the denoising level
@@ -92,14 +106,12 @@ def takameru(fp: str, output: str, noise: int, scale: int, force: bool):
             and '.cbz' in f
         ]
 
-    # Creates the waifu2x upscaler
-    print('Starting waifu2x...')
-    waifu2x = Waifu2x(gpuid=0, scale=scale, noise=noise, num_threads=4)
+    waifu2x = waifu_2x(scale, noise)
 
     for f in files:
         out = os.path.join(output, os.path.basename(f).replace('.cbz', '.pdf'))
         if os.path.isfile(out) and not force:
-            if not questionary.confirm(f'{out} already exists. Do you wish to overwrite it?').ask():
+            if not questionary.confirm(f'{out} already exists. Do you wish to write it?').ask():
                 continue
         if os.path.isfile(out):
             os.remove(out)
