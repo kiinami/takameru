@@ -63,13 +63,15 @@ def save_to_pdf(images: list[Image], output: str):
 
 
 @click.command()
-@click.option('-n', '--noise-level',    'noise', default=2, help='denoise level (-1/0/1/2/3, default=0)')
-@click.option('-s', '--scale',          'scale', default=2, help='upscale ratio (1/2/4/8/16/32, default=2)')
+@click.option('-n', '--noise-level',    'noise', default=2,     help='denoise level (-1/0/1/2/3, default=0)')
+@click.option('-s', '--scale',          'scale', default=2,     help='upscale ratio (1/2/4/8/16/32, default=2)')
+@click.option('-f', '--force',          'force', is_flag=True,  help='force overwrite')
 @click.argument('fp')
 @click.argument('output')
-def takameru(fp: str, output: str, noise: int, scale: int):
+def takameru(fp: str, output: str, noise: int, scale: int, force: bool):
     """
     Upscales a CBZ file or all CBZ files in a folder
+    :param force: whether to force overwrite
     :param fp: the file or directory to upscale
     :param output: the file or directory to save the output
     :param noise: the denoising level
@@ -96,8 +98,9 @@ def takameru(fp: str, output: str, noise: int, scale: int):
 
     for f in files:
         out = os.path.join(output, os.path.basename(f).replace('.cbz', '.pdf'))
-        if os.path.isfile(out) and not questionary.confirm(f'{out} already exists. Do you wish to overwrite it?').ask():
-            continue
+        if os.path.isfile(out) and not force:
+            if not questionary.confirm(f'{out} already exists. Do you wish to overwrite it?').ask():
+                continue
         if os.path.isfile(out):
             os.remove(out)
 
